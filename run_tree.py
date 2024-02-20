@@ -14,7 +14,7 @@ wp.config.verify_cuda = True
 dvc = "cuda:0"
 
 batch_size = 1
-dx = 0.02
+dx = 0.01
 
 # first initialization
 mpm_solver = MPM_Simulator_WARP(n_particles=10, batch_size=batch_size, dx=dx, device=dvc)
@@ -24,12 +24,12 @@ grid_lim = [1.0, 1.0, 1.0]
 
 # second initialization
 # You can either load sampling data from an external h5 file, containing initial position (n,3) and particle_volume (n,)
-mpm_solver.load_from_sampling("sim_data/sand_column.h5", batch_size=batch_size, dx=dx, device=dvc, fps=1000)
+# mpm_solver.load_from_sampling("sim_data/sand_column.h5", batch_size=batch_size, dx=dx, device=dvc, fps=1000)
 # mpm_solver.load_from_sampling("sim_data/rot_tree_sampling.h5", batch_size=batch_size, dx=dx, 
 #                               grid_lim=[3.63005695, 2.52705687, 2.61115279], device=dvc, fps=10000)
 
-# mpm_solver.load_from_sampling("sim_data/vsf_orange_tree_angle06_sampling.h5", batch_size=batch_size, 
-#                               dx=dx, grid_lim=grid_lim, device=dvc, fps=-1)
+mpm_solver.load_from_sampling("sim_data/vsf_orange_tree_angle06_sampling.h5", batch_size=batch_size, 
+                              dx=dx, grid_lim=grid_lim, device=dvc, fps=-1)
 
 # Or load from torch tensor (also position and volume)
 # Here we borrow the data from h5, but you can use your own
@@ -44,9 +44,9 @@ mpm_solver.load_initial_data_from_torch(position_tensor, volume_tensor, batch_si
 # Note: You must provide 'density=..' to set particle_mass = density * particle_volume
 
 material_params = {
-    'E': 2000,
+    'E': 20000,
     'nu': 0.2,
-    "material": "sand",
+    "material": "jelly",
     'friction_angle': 35,
     'g': [0.0, 0.0, -4.0],
     "density": 200.0
@@ -55,16 +55,19 @@ mpm_solver.set_parameters_dict(material_params)
 
 mpm_solver.finalize_mu_lam() # set mu and lambda from the E and nu input
 
-mpm_solver.add_surface_collider((0.0, 0.0, -0.22), (0.0,0.0,1.0), 'sticky', 0.0)
+# mpm_solver.add_surface_collider((0.0, 0.0, 0.13), (0.0,0.0,1.0), 'sticky', 0.0)
+mpm_solver.add_surface_collider((0.0, 0.0, 0.1), (0.0,0.0,1.0), 'sticky', 0.0)
 # mpm_solver.add_surface_collider((0.27673412, 2.44109263, 1.15073543), (0.0,-1.0,0.0), 'sticky', 0.0)
 
 directory_to_save = './sim_results_warp'
 
 save_data_at_frame(mpm_solver, directory_to_save, 0, save_to_ply=True, save_to_h5=False)
 
+dt = 0.001
+
 time1 = time.time()
 for k in range(1, 500):
-    mpm_solver.p2g2p(k, 0.002, device=dvc)
+    mpm_solver.p2g2p(k, dt, device=dvc)
     save_data_at_frame(mpm_solver, directory_to_save, k, save_to_ply=True, save_to_h5=False)
 time2 = time.time()
 print("Time for 500 iterations: ", time2-time1)
