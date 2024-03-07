@@ -48,7 +48,7 @@ material_params = {
     'nu': 0.2,
     "material": "jelly",
     'friction_angle': 35,
-    'g': [0.0, 0.0, -4.0],
+    'g': [0.0, 0.0, -10.0],
     "density": 200.0
 }
 mpm_solver.set_parameters_dict(material_params)
